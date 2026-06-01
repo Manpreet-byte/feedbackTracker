@@ -1,14 +1,32 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-  if (!process.env.MONGO_URI) {
-    throw new Error(
-      'MONGO_URI is not defined. Create feedbackTracker/.env (copy from .env.example) or export MONGO_URI before starting the server.'
-    );
+const DEFAULT_DATABASE = 'feedbackTracker';
+const DEFAULT_MONGO_URI = `mongodb://127.0.0.1:27017/${DEFAULT_DATABASE}`;
+
+const resolveMongoUri = (uri) => {
+  if (!uri) {
+    return DEFAULT_MONGO_URI;
   }
 
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const parsed = new URL(uri);
+
+    if (!parsed.pathname || parsed.pathname === '/') {
+      parsed.pathname = `/${DEFAULT_DATABASE}`;
+      return parsed.toString();
+    }
+
+    return uri;
+  } catch (error) {
+    return uri.endsWith('/') ? `${uri}${DEFAULT_DATABASE}` : uri;
+  }
+};
+
+const connectDB = async () => {
+  const mongoUri = resolveMongoUri(process.env.MONGO_URI);
+
+  try {
+    await mongoose.connect(mongoUri);
     console.log('MongoDB connected');
   } catch (error) {
     const message = error?.message || String(error);
