@@ -19,6 +19,11 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'Feedback Tracker API is running' });
 });
 
+// Provide a response at the root path so deployed instances don't return 404
+app.get('/', (req, res) => {
+  return res.redirect('/api/health');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
